@@ -161,8 +161,9 @@ PASS=data['pass']
 
 PORT_MONGO=data['port_mongo']
 
-r=RabbitGW(IP,LOGIN,PASS,PORT_MONGO)
+print('Start service logger...')
 
+r=RabbitGW(IP,LOGIN,PASS,PORT_MONGO)
 r.start()
 
         
