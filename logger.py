@@ -4,6 +4,7 @@ import json
 from pymongo import MongoClient
 import re
 from datetime import datetime
+from tinyot_parser import parse
 
 pTopicWithAddr=re.compile(r'^(.+)\.([0-9])+$')
 def extractAddr(key,base):
@@ -142,11 +143,36 @@ class RabbitGW:
             print('ERROR DB: '+str(ex))
             return
 
+    def cb_tinyot(self,ch, method, properties, body):
+        key=method.routing_key
+        msg=body.decode()
+
+        print('TINYOT: %s -> %s' % (key,msg) )
+
+        try:
+            doc=parse(msg)
+        except Exception as ex:
+            print('ERROR JSON: '+str(ex))
+            #self.ch.basic_ack(delivery_tag=method.delivery_tag)
+            return
+
+        doc['date_comm']=datetime.now()
+        doc['key']=key
+
+        try:
+            col=self.mg.tinyot.datas
+            col.insert_one(doc)
+            #self.ch.basic_ack(delivery_tag=method.delivery_tag)
+        except Exception as ex:
+            print('ERROR DB: '+str(ex))
+            return
+
 
     def start(self):
         self.ch.basic_consume(queue="minou.logs", on_message_callback=self.cb_logs)
         self.ch.basic_consume(queue="minou", on_message_callback=self.cb_data)
         self.ch.basic_consume(queue="maison", on_message_callback=self.cb_maison)
+        self.ch.basic_consume(queue="tinyot_devices", on_message_callback=self.cb_tinyot)
 
         self.ch.start_consuming()
 
