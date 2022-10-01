@@ -153,7 +153,7 @@ class RabbitGW:
             doc=parse(msg)
         except Exception as ex:
             print('ERROR JSON: '+str(ex))
-            #self.ch.basic_ack(delivery_tag=method.delivery_tag)
+            self.ch.basic_ack(delivery_tag=method.delivery_tag)
             return
 
         doc['date_comm']=datetime.now()
@@ -162,7 +162,7 @@ class RabbitGW:
         try:
             col=self.mg.tinyot.datas
             col.insert_one(doc)
-            #self.ch.basic_ack(delivery_tag=method.delivery_tag)
+            self.ch.basic_ack(delivery_tag=method.delivery_tag)
         except Exception as ex:
             print('ERROR DB: '+str(ex))
             return
