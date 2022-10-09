@@ -167,12 +167,86 @@ class RabbitGW:
             print('ERROR DB: '+str(ex))
             return
 
+    def cb_oiso(self,ch, method, properties, body):
+        key=method.routing_key
+        msg=body.decode()
+
+        print('OISO DATAS: %s -> %s' % (key,msg) )
+
+        try:
+            doc=json.loads(msg)
+        except Exception as ex:
+            print('ERROR JSON: '+str(ex))
+            self.ch.basic_ack(delivery_tag=method.delivery_tag)
+            return
+
+        doc['date_comm']=datetime.now()
+        doc['key']=key
+
+        try:
+            col=self.mg.oiso.datas
+            col.insert_one(doc)
+            self.ch.basic_ack(delivery_tag=method.delivery_tag)
+        except Exception as ex:
+            print('ERROR DB: '+str(ex))
+            return
+
+    def cb_oiso_events(self,ch, method, properties, body):
+        key=method.routing_key
+        msg=body.decode()
+
+        print('OISO EVENTS: %s -> %s' % (key,msg) )
+
+        try:
+            doc=json.loads(msg)
+        except Exception as ex:
+            print('ERROR JSON: '+str(ex))
+            self.ch.basic_ack(delivery_tag=method.delivery_tag)
+            return
+
+        doc['date_comm']=datetime.now()
+        doc['key']=key
+
+        try:
+            col=self.mg.oiso.events
+            col.insert_one(doc)
+            self.ch.basic_ack(delivery_tag=method.delivery_tag)
+        except Exception as ex:
+            print('ERROR DB: '+str(ex))
+            return
+
+    def cb_oiso_logs(self,ch, method, properties, body):
+        key=method.routing_key
+        msg=body.decode()
+
+        print('OISO LOGS: %s -> %s' % (key,msg) )
+
+        try:
+            doc=json.loads(msg)
+        except Exception as ex:
+            print('ERROR JSON: '+str(ex))
+            self.ch.basic_ack(delivery_tag=method.delivery_tag)
+            return
+
+        doc['date_comm']=datetime.now()
+        doc['key']=key
+
+        try:
+            col=self.mg.oiso.logs
+            col.insert_one(doc)
+            self.ch.basic_ack(delivery_tag=method.delivery_tag)
+        except Exception as ex:
+            print('ERROR DB: '+str(ex))
+            return
 
     def start(self):
         self.ch.basic_consume(queue="minou.logs", on_message_callback=self.cb_logs)
         self.ch.basic_consume(queue="minou", on_message_callback=self.cb_data)
         self.ch.basic_consume(queue="maison", on_message_callback=self.cb_maison)
         self.ch.basic_consume(queue="tinyot_devices", on_message_callback=self.cb_tinyot)
+        self.ch.basic_consume(queue="oiso", on_message_callback=self.cb_oiso)
+        self.ch.basic_consume(queue="oiso.events", on_message_callback=self.cb_oiso_events)
+        self.ch.basic_consume(queue="oiso.logs", on_message_callback=self.cb_oiso_logs)
 
         self.ch.start_consuming()
 
