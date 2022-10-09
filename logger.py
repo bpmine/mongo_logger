@@ -222,7 +222,7 @@ class RabbitGW:
         print('OISO LOGS: %s -> %s' % (key,msg) )
 
         try:
-            doc=json.loads(msg)
+            doc={'msg':msg}
         except Exception as ex:
             print('ERROR JSON: '+str(ex))
             self.ch.basic_ack(delivery_tag=method.delivery_tag)
